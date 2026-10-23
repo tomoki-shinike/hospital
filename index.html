@@ -917,7 +917,11 @@ function sceneOf(kind,obj){
   const fixed=p.items.filter(f=>f.fixed).map(f=>r.mirror?mirrorItem(f,p.w):f);let zone=null;
   if(r.bedNote!=null){zone=zoneOf(p,r.bedNote,r.mirror);const rn=roomNoOf(r);
     for(const b of patBeds(p,r.mirror)){if(b.note===r.bedNote)continue;const sib=D.rooms.find(x=>roomNoOf(x)===rn&&x.bedNote===b.note);const sb=sib&&sib.items.find(f=>f.t==='bed');
-      fixed.push({...(sb||b),id:'ctx'+b.note,note:b.note,ctx:true,fixed:true});}}
+      fixed.push({...(sb||b),id:'ctx'+b.note,note:b.note,ctx:true,fixed:true});
+      // ほかのベッドのアーム式テレビも（その部屋で動かした位置で）薄く表示する
+      let tvs=sib?sib.items.filter(f=>f.t==='armtv'):null;
+      if(!tvs){const init=p.items.filter(f=>!f.fixed);const pb=init.filter(f=>f.t==='bed');tvs=init.filter(f=>f.t==='armtv'&&nearestNote(f,pb)===b.note).map(f=>r.mirror?mirrorItem(f,p.w):f);}
+      tvs.forEach((t,i)=>fixed.push({...t,id:'ctxtv'+b.note+'_'+i,ctx:true,fixed:true}));}}
   return{W:p.w,H:p.h,fixed,items:r.items,pat:p,room:r,zone};
 }
 // 大部屋の1床分だけを切り出す（ほかのベッドは写さない）
