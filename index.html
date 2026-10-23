@@ -98,7 +98,9 @@ canvas{display:block;touch-action:none;width:100%;height:100%}
 .edgeBtn{display:none}
 #roomNav{position:absolute;left:10px;top:10px;display:flex;gap:6px;align-items:center;max-width:calc(100% - 70px);z-index:4}
 #roomNav #badge{position:static;max-width:none;min-width:0;flex:0 1 auto}
+.navPair{display:flex;gap:6px;flex:none}
 .navBtn{min-height:32px;padding:4px 10px;font-size:13px;font-weight:700;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12);flex:none}
+body:not(.roomEdit) .navPair{display:none}
 body:not(.roomEdit) .navBtn{display:none}
 body.in3d #roomNav{display:none}
 .tourDlg{max-width:620px}
@@ -289,7 +291,7 @@ body.admin #stage{box-shadow:inset 0 0 0 4px #f59f00}
 
     <div id="stage">
       <canvas id="cv"></canvas>
-      <div id="roomNav"><button id="bPrevRoom" class="navBtn" title="前の部屋（←キー）">◀ 前</button><div id="badge"></div><button id="bNextRoom" class="navBtn" title="次の部屋（→キー）">次 ▶</button></div>
+      <div id="roomNav"><div class="navPair"><button id="bPrevRoom" class="navBtn" title="前の部屋（←キー）">◀ 前</button><button id="bNextRoom" class="navBtn" title="次の部屋（→キー）">次 ▶</button></div><div id="badge"></div></div>
       <div id="adminTag" class="adm">⚙ 管理モード中　部屋の構造・パターン・マップを変更できます</div>
       <div id="prevBar" hidden><span>パターンの形を表示中</span><button id="bPrevAdd" class="primary">＋ この形で部屋を追加</button><button id="bPrevClose">閉じる</button></div>
       <div id="zoomBtns"><button id="b3d" class="b3d" aria-label="3Dで見る">3D</button><button id="bZin" aria-label="拡大">＋</button><button id="bZout" aria-label="縮小">－</button><button id="bFit" aria-label="全体表示" style="font-size:12px">全体</button></div>
@@ -319,7 +321,7 @@ body.admin #stage{box-shadow:inset 0 0 0 4px #f59f00}
             <label>角度(°)<input id="sR" type="number" step="5" inputmode="numeric"></label>
           </div>
           <div class="btns"><button id="sRot90">90°回転</button><button id="sRotM">−15°</button><button id="sRotP">＋15°</button></div>
-          <div class="btns" id="sDoorRow"><button id="sFlipF">開く向きを反転</button><button id="sFlipH">左右を反転</button></div>
+          <div class="btns" id="sDoorRow"><button id="sFlipF">開く向きを反転</button><button id="sFlipH">左右を反転</button><button id="sClosed">閉じた状態で表示</button></div>
           <div class="field" id="sNoteRow" style="margin-top:10px">名前・メモ（図に表示されます。例：A床、右手で使用）<input type="text" id="sNote" placeholder="空欄なら物品名を表示"></div>
           <label id="sFixedRow" style="margin:4px 0 2px;color:var(--text)"><input type="checkbox" id="sFixed">動かない設備にする（各部屋では動かせません）</label>
           <div class="btns"><button id="sDup">複製</button><button id="sFront">いちばん上へ</button><button id="sDel" class="danger">削除</button></div>
@@ -632,6 +634,7 @@ const CAT=[
   {k:'rail',n:'手すり（壁付）',w:800,h:40,fixed:1},
   {k:'closet',n:'収納',w:900,h:600,fixed:1},
   {k:'shower',n:'シャワー',w:900,h:900,fixed:1},
+  {k:'tub',n:'浴槽',w:800,h:1450,fixed:1},
   {k:'curtain',n:'カーテン',w:2000,h:60,fixed:0},
   {k:'shelf2',n:'棚（洋服入れ＋台）',w:1250,h:580,fixed:1},
   {k:'wtable',n:'壁付けテーブル',w:850,h:220,fixed:1},
@@ -776,7 +779,10 @@ function wardPatterns(){
      mk('curtain',1200,ZH,0,F({w:2300})),mk('curtain',1200,H-S,0,F({w:2300})),
      mk('bed',1100,760,270,M({note:'2'})),cabTV(260,1540),shelfL(1080,1975),
      shelfL(1080,2325),cabTV(260,2760),mk('bed',1100,3540,270,M({note:'1'}))]);
-   P.p2l.zones={'1':{x0:0,y0:ZH,x1:W,y1:H-S},'2':{x0:0,y0:0,x1:W,y1:ZH}};}
+   P.p2l.zones={'1':{x0:0,y0:ZH,x1:W,y1:H-S},'2':{x0:0,y0:0,x1:W,y1:ZH}};
+   // 2人部屋（洗面右側）：310号室。洗面左側を左右反転（入口は左、洗面台は右、ベッドは右が頭）
+   add('p2r','2人部屋（洗面右側）',W,H,P.p2l.items.map(f=>({...mirrorItem(f,W),id:nid()})));
+   P.p2r.zones={'1':{x0:0,y0:ZH,x1:W,y1:H-S},'2':{x0:0,y0:0,x1:W,y1:ZH}};}
   // 個室：円形シャワートイレ付（4階 401〜407）。入口側の角に円形のユニット、扉は円に沿ってスライド
   // 手書きの図（402・405・407・410・412・415）をもとに：入口から見て左の壁に 洗面台 → シャワートイレ → 狭いテーブル → ベッド（頭が左の壁）→ 棚
   {const W=3000,H=6100;add('pcu','個室（円形シャワートイレ）',W,H,[win(W,1730),mk('door1',2300,H+T/2,0,F({w:1100,hs:-1})),
@@ -794,21 +800,24 @@ function wardPatterns(){
    single('psst','個室（シャワー・トイレ付）',3100,H,[hw(0,ux-r,H-uy),vw(ux,H-uy+r,H),
      mk('cdoor',ux-r/2,H-uy+r/2,0,F({w:r,h:r})),
      mk('toi',380,H-uy+T/2+360,0,F()),mk('rail',25,H-uy+700,90,F({w:600})),mk('shower',ux-560,H-520,0,F({w:900,h:900}))]);}
-  // 特別室（308-1・416-1）：トイレと浴室が別、冷蔵庫、椅子2脚
-  {const W=5600,H=6800,by=H-1800;
-   add('psp','特別室（シャワー・トイレ・浴室）',W,H,[win(W,3000),doorB(H,W-800,1100),
-     vw(1500,by,H),vw(3300,by,H),hw(0,3300+T/2,by),
-     mk('door2',750,by,0,F({w:700})),mk('door2',2400,by,0,F({w:800})),
-     mk('toi',750,H-410,180,F()),mk('rail',25,H-800,90,F({w:600})),
-     mk('shower',2400,H-900,0,F({w:1300,h:1300,note:'浴室'})),
-     mk('sink',W-250,H-2600,90,F()),mk('fri',W-300,3300,90,F()),
-     mk('bed',3600,1150,0,M({note:'1'})),cabTV(4500,330),shelf(W-250,2100,90),
-     mk('chair',800,1100,180,M()),mk('chair',800,2300,0,M()),mk('shelf',800,1700,0,F({w:600,h:500,note:'テーブル'}))]);}
+  // 特別室（308-1・416-1）：共有いただいた図をもとに。左下に浴室（浴槽）、その右に洗面・トイレの前室（ベッド横の扉は閉じた状態で表示）
+  {const W=5600,H=6800,by=4414,bx=1540,vx=3850;
+   add('psp','特別室（シャワー・トイレ・浴室）',W,H,[win(W,3000),mk('door1',4450,H+T/2,0,F({w:1000,hs:-1})),
+     hw(0,vx+T/2,by),vw(bx,by,H),vw(vx,by,H),
+     mk('door1',2020,by,0,F({w:800,closed:true})), // 前室の扉（外開き・ふだんは閉じた状態）
+     mk('door1',bx,4760,270,F({w:650})),           // 浴室の扉
+     mk('tub',540,5820,0,F({w:800,h:1450,note:'浴槽'})),
+     mk('sink',2850,5010,90,F({w:900,h:550,note:'洗面台'})),mk('wall',3195,5560,0,F({w:1190,h:80,low:true})),
+     mk('toi',2580,6200,90,F()),mk('rail',2600,H-25,0,F({w:900})),
+     mk('closet',5170,790,90,F({w:1300,h:700,note:'タンス'})),mk('fri',5245,1890,90,F({w:550,h:600})),
+     mk('chair',5295,2850,90,M()),mk('chair',5295,3780,90,M()),
+     mk('bed',1210,2330,270,M({note:'1'})),
+     mk('armtv',220,1030,90,M({note:'TV',base:{x:50,y:1030}}))]);} // テレビ台があった位置の壁からアーム式テレビ
   for(const p of Object.values(P))p.items=cabToArm(p.items,p.w,p.h);
   return P;
 }
 const WARD_ROOMS={
-  '3階':{p4r:['301','302','303'],p4l:['305','306','307'],psp:['308'],p2:['310'],pst:['311','312','313','315','316','317','318','320','321']},
+  '3階':{p4r:['301','302','303'],p4l:['305','306','307'],psp:['308'],p2r:['310'],pst:['311','312','313','315','316','317','318','320','321']},
   '4階':{pcu:['401','402','403','405','406','407','408','410','411','412','413','415'],pst:['417','418','421','423','425','426','427','428'],psp:['416'],p2l:['420','422']}
 };
 // 「床頭台・TV」を、その壁側の角から伸びるアーム式テレビに置きかえる（当院は床頭台なし）
@@ -829,7 +838,7 @@ function cabToArm(items,W,H){
   return out;
 }
 // アーム式テレビの取り付け位置を部屋ごとに指定（side：入口から見た壁、L＝左の壁の中央）
-const WARD_ARM={'308-1':{side:'L'}};
+const WARD_ARM={};
 function applyArmOverrides(rooms,P){
   for(const r of rooms){const o=WARD_ARM[r.no];if(!o)continue;const p=Object.values(P).find(x=>x.id===r.pat)||patById(r.pat);if(!p)continue;
     const tv=r.items.find(f=>f.t==='armtv');if(!tv)continue;
@@ -850,7 +859,7 @@ function wardData(){
   return{patterns:Object.values(P),rooms,floors,roomNos:[...new Set(rooms.map(r=>r.roomNo))].sort(natCmp)};
 }
 function newFloor(name){return{id:nid(),name,w:60000,h:24000,items:[],bg:null};}
-function newData(){D={ver:1,nextId:1,patterns:[],rooms:[],templates:TPL0.slice(),roomNos:[],floors:[]};const wd=wardData();D.patterns=wd.patterns;D.rooms=wd.rooms;D.roomNos=wd.roomNos;D.floors=wd.floors;D.ward=16;D.layouts=starterLayouts();return D;}
+function newData(){D={ver:1,nextId:1,patterns:[],rooms:[],templates:TPL0.slice(),roomNos:[],floors:[]};const wd=wardData();D.patterns=wd.patterns;D.rooms=wd.rooms;D.roomNos=wd.roomNos;D.floors=wd.floors;D.ward=20;D.layouts=starterLayouts();return D;}
 function fixData(d){
   d.patterns=(d.patterns||[]).map(p=>({...p,items:(p.items||[]).filter(f=>DEF[f.t])}));
   d.rooms=(d.rooms||[]).map(r=>({memo:'',staff:'',mirror:false,...r,items:(r.items||[]).filter(f=>DEF[f.t])}));
@@ -975,7 +984,10 @@ function drawShape(ctx,f,s,k,o){
     const sx=(f.hs||1),sy=(f.fs||1);
     ctx.save();ctx.scale(sx,sy);
     ctx.strokeStyle='#9a3412';ctx.lineWidth=Math.max(1.4,1.7*k);
-    if(d.door==='swing'){
+    if(d.door==='swing'&&f.closed){ // 閉じた状態：扉は開口をふさぐ線、開く向きは短い点線で
+      ln(-w/2,-h/2-h*.1,w/2,-h/2-h*.1);
+      ctx.save();ctx.setLineDash([3*k,3*k]);ctx.lineWidth=Math.max(1,1*k);ctx.beginPath();ctx.arc(-w/2,-h/2,w,-PI/2+PI/2*.72,0);ctx.stroke();ctx.restore();
+    }else if(d.door==='swing'){
       ln(-w/2,-h/2,-w/2,-h/2-w);
       ctx.save();ctx.setLineDash([4*k,3*k]);ctx.lineWidth=Math.max(1,1.1*k);ctx.beginPath();ctx.arc(-w/2,-h/2,w,-PI/2,0);ctx.stroke();ctx.restore();
     }else if(d.door==='slide'){
@@ -1086,6 +1098,7 @@ function drawShape(ctx,f,s,k,o){
   else if(t==='locker'){ln(0,-h/2,0,h/2);ln(-w*.08,-h*.1,-w*.08,h*.1);ln(w*.08,-h*.1,w*.08,h*.1);}
   else if(t==='sink'||t==='sinkm'){ctx.beginPath();ctx.ellipse(0,h*.06,w*.3,h*.28,0,0,PI*2);ctx.stroke();ln(-w/2,-h/2+h*.14,w/2,-h/2+h*.14);}
   else if(t==='toi'){ctx.beginPath();ctx.rect(-w/2,-h/2,w,h*.28);ctx.stroke();ctx.beginPath();ctx.ellipse(0,h*.12,w*.38,h*.3,0,0,PI*2);ctx.stroke();}
+  else if(t==='tub'){ctx.beginPath();rr(ctx,-w/2+w*.12,-h/2+h*.08,w*.76,h*.84,Math.min(w,h)*.25);ctx.stroke();ctx.beginPath();ctx.arc(0,h/2-h*.18,Math.max(1.5*k,w*.04),0,PI*2);ctx.stroke();}
   else if(t==='shower'){ctx.save();ctx.strokeStyle=col.stroke;ctx.lineWidth=Math.max(1,1*k);const st=Math.max(5*k,120*s);ctx.beginPath();ctx.rect(-w/2,-h/2,w,h);ctx.clip();ctx.globalAlpha=.35;for(let q=-w-h;q<w+h;q+=st){ln(q,-h/2,q+h,h/2);}ctx.restore();ctx.save();ctx.fillStyle='#fff';circ(0,0,Math.max(2.5*k,Math.min(w,h)*.07),true);ctx.restore();}
   else if(t==='closet'){ctx.save();ctx.setLineDash([4*k,3*k]);ln(-w/2,-h/2,w/2,h/2);ln(w/2,-h/2,-w/2,h/2);ctx.restore();}
   else if(t==='wc'){
@@ -1364,7 +1377,7 @@ const NOHIT=['zone','turn','label','curtain','rail','otable','zacall','tentou','
 function isSolid(f){return f.t==='_clear'||(!NOHIT.includes(f.t)&&!DEF[f.t].band);}
 // 扉の前（部屋の内側）は通り道としてあける
 function doorClear(f){
-  const d=DEF[f.t];if(!d.door)return null;
+  const d=DEF[f.t];if(!d.door||f.closed)return null; // 閉じた状態の扉の前には物を置ける
   const depth=d.door==='swing'?f.w:700,fs=f.fs||1,a=f.r*PI/180;
   const ly=-(f.h/2+depth/2)*fs;
   return{t:'_clear',x:f.x-Math.sin(a)*ly,y:f.y+Math.cos(a)*ly,w:f.w,h:depth,r:f.r};
@@ -1699,7 +1712,7 @@ function updateProps(){
   if(act!==$('#sR'))$('#sR').value=Math.round(f.r);
   if(act!==$('#sNote'))$('#sNote').value=f.note||'';
   $('#sH').disabled=!!d.band;
-  $('#sDoorRow').hidden=!d.door;
+  $('#sDoorRow').hidden=!d.door;$('#sClosed').hidden=d.door!=='swing';$('#sClosed').textContent=f.closed?'開いた状態で表示':'閉じた状態で表示';
   $('#sFixedRow').hidden=ui.mode!=='pat';$('#sFixed').checked=!!f.fixed;
   const mp=!!d.map;$('#sNoteRow').hidden=f.t==='mroom';$('#sRotM').hidden=mp;$('#sRotP').hidden=mp;$('#sR').parentElement.hidden=mp;$('#sFront').hidden=mp;
 }
@@ -1957,6 +1970,7 @@ numField($('#sR'),(f,v)=>{f.r=((v%360)+360)%360;});
 $('#sRot90').onclick=()=>rotBy(90);$('#sRotM').onclick=()=>rotBy(-15);$('#sRotP').onclick=()=>rotBy(15);
 $('#sFlipF').onclick=()=>editSel(f=>{f.fs=-(f.fs||1);});
 $('#sFlipH').onclick=()=>editSel(f=>{f.hs=-(f.hs||1);});
+$('#sClosed').onclick=()=>editSel(f=>{f.closed=!f.closed;});
 $('#sFixed').onchange=()=>editSel(f=>{f.fixed=$('#sFixed').checked;});
 $('#sDup').onclick=dupSel;$('#sDel').onclick=delSel;$('#sFront').onclick=frontSel;
 $('#mbRot').onclick=()=>rotBy(90);$('#mbDup').onclick=dupSel;$('#mbDel').onclick=delSel;$('#mbMore').onclick=()=>document.body.classList.add('openR');
@@ -2539,7 +2553,8 @@ function model3D(G,f){
       B(w/2-L2/2,h/2-10,L2,20,600,1350,hex3('#c9b48f'));break;}
     case'armtv':{B(0,0,w,Math.max(h,40),1150,1600,C3.dark);if(f.base){const q=toLocal(f,f.base),m=f.mx?-1:1,bx=q.x*m,bz=q.y,len=Math.hypot(bx,bz)+20,ang=Math.atan2(bz,bx);
       const tr2=(lx,lz)=>tr(bx/2+lx*Math.cos(ang)-lz*Math.sin(ang),bz/2+lx*Math.sin(ang)+lz*Math.cos(ang));boxL(G,tr2,0,0,len,40,1350,1400,hex3('#94a3b8'));boxL(G,(lx,lz)=>tr(bx+lx,bz+lz),0,0,80,80,1250,1500,C3.gray);}break;}
-    case'shelf':B(0,0,w,h,0,1800,C3.wood);break;
+    case'tub':B(0,0,w,h,0,550,C3.white);B(0,0,w*.76,h*.84,520,552,hex3('#cfe3f7'));break;
+    case'shelf':{const ht=f.note==='テレビ台'?500:(f.note==='テーブル'?720:1800);B(0,0,w,h,0,ht,C3.wood);break;}
     case'locker':B(0,0,w,h,0,1800,hex3('#c3ccd6'));break;
     case'closet':B(0,0,w,h,0,2000,C3.wood);break;
     case'fri':B(0,0,w,h,0,850,C3.white);break;
@@ -2600,7 +2615,7 @@ function model3D(G,f){
 function wallsWithOpenings(G,sc,cut){
   const W=sc.W,H=sc.H,bands=[...sc.fixed,...sc.items].filter(f=>DEF[f.t].band);
   const walls=[{x0:-T,z0:-T,x1:W+T,z1:0,side:'N'},{x0:-T,z0:H,x1:W+T,z1:H+T,side:'S'},{x0:-T,z0:0,x1:0,z1:H,side:'W'},{x0:W,z0:0,x1:W+T,z1:H,side:'E'}];
-  for(const f of[...sc.fixed,...sc.items])if(f.t==='wall'&&isAxis(f)){const b=bboxOf(f);walls.push({x0:b.minx,z0:b.miny,x1:b.maxx,z1:b.maxy,side:'P',ht:H3.part});}
+  for(const f of[...sc.fixed,...sc.items])if(f.t==='wall'&&isAxis(f)){const b=bboxOf(f);walls.push({x0:b.minx,z0:b.miny,x1:b.maxx,z1:b.maxy,side:'P',ht:f.low?1100:H3.part});}
   for(const wl of walls){
     const horiz=(wl.x1-wl.x0)>=(wl.z1-wl.z0),a0=horiz?wl.x0:wl.z0,a1=horiz?wl.x1:wl.z1,full=wl.ht||H3.wall;
     const ht=(cut[wl.side]||(V3.lowWalls&&wl.side!=='P'))?250:(V3.lowWalls?Math.min(full,900):full);
@@ -2959,7 +2974,7 @@ $('#fileIn').onchange=()=>{
     // 以前の試作データ（当院の病棟データになる前のもの）は控えに回して、当院のデータで始める
     if(old&&old.ward>=2)D=fixData(old);else{try{localStorage.setItem(KEY+'-bak',s);}catch(e){}migrated=true;}}}catch(e){D=null;}
   if(!D){newData();save();}
-  let upgraded=false,upgraded2=false,upgraded3=false,upgraded4=false,upgraded5=false,upgraded6=false;
+  let upgraded=false,upgraded2=false,upgraded3=false,upgraded4=false,upgraded5=false,upgraded6=false,upgraded7=false;
   if(D.ward>=2&&D.ward<5){ // 4人部屋を「洗面右側（301〜303）」「洗面左側（305〜307）」の2パターンにする
     const wp=wardPatterns(),old=D.patterns.find(x=>x.name==='4人部屋（洗面共用）');
     const put=np=>{let p=D.patterns.find(x=>x.name===np.name);if(!p){p={id:nid(),name:np.name};D.patterns.push(p);}p.w=np.w;p.h=np.h;p.items=np.items;p.zones=np.zones;return p;};
@@ -3017,6 +3032,25 @@ $('#fileIn').onchange=()=>{
       else{const dn=f.y-f.base.y;if(Math.abs(Math.abs(dn)-380)<3)f.y=f.base.y+Math.sign(dn)*170;else if(Math.abs(Math.abs(dn)-205)<3)f.y=f.base.y+Math.sign(dn)*120;}};
     D.patterns.forEach(p=>p.items.forEach(fix));D.rooms.forEach(r=>r.items.forEach(fix));
     applyArmOverrides(D.rooms,{});D.ward=16;save();}
+  if(D.ward===16){ // 特別室（308・416）を共有いただいた図の構造に
+    const np=wardPatterns().psp,p=D.patterns.find(x=>x.name===np.name);
+    if(p){p.w=np.w;p.h=np.h;p.items=np.items;for(const r of D.rooms){if(r.pat!==p.id)continue;pushHist(r,'部屋の形の更新前');r.items=initItemsFor(p,r.mirror,r.bedNote);}upgraded7=true;}
+    applyArmOverrides(D.rooms,{});D.ward=17;save();}
+  if(D.ward===17){ // 特別室：テレビ台 → 壁から出ているアーム式テレビ
+    const p=D.patterns.find(x=>x.name==='特別室（シャワー・トイレ・浴室）');
+    if(p){p.items=p.items.filter(f=>!(f.t==='shelf'&&f.note==='テレビ台'));const pt=p.items.find(f=>f.t==='armtv');if(pt){pt.base={x:50,y:1030};pt.x=220;pt.y=1030;pt.r=90;}
+      for(const r of D.rooms){if(r.pat!==p.id)continue;const t=r.items.find(f=>f.t==='armtv');if(t){const m=r.mirror;t.base={x:m?p.w-50:50,y:1030};t.x=m?p.w-220:220;t.y=1030;t.r=m?-90:90;}}}
+    D.ward=18;save();}
+  if(D.ward===18){ // 特別室：洗面台とトイレの間の背の低い仕切りを、前室の右の壁まで
+    const p=D.patterns.find(x=>x.name==='特別室（シャワー・トイレ・浴室）');
+    if(p){const w=p.items.find(f=>f.t==='wall'&&Math.abs(f.y-5560)<5&&f.h<=100);if(w){w.x=3195;w.w=1190;w.low=true;}}
+    D.ward=19;save();}
+  if(D.ward===19){ // 310号室を「2人部屋（洗面右側）」に（洗面左側の反転）
+    const wp=wardPatterns(),np=wp.p2r;let p=D.patterns.find(x=>x.name===np.name);if(!p){p={id:nid(),name:np.name};D.patterns.push(p);}
+    p.w=np.w;p.h=np.h;p.items=np.items;p.zones=np.zones;
+    for(const r of D.rooms){if(roomNoOf(r)!=='310')continue;pushHist(r,'部屋の形の更新前');r.pat=p.id;r.mirror=false;r.items=initItemsFor(p,false,r.bedNote);}
+    const old=D.patterns.find(x=>x.name==='2人部屋（洗面共用）');if(old&&!D.rooms.some(r=>r.pat===old.id))D.patterns.splice(D.patterns.indexOf(old),1);
+    D.ward=20;save();}
   if(false){ // 4人部屋の形を更新（入口側の通路と横の洗面台、4つの均等なエリア）
     const np=wardPatterns().p4,p=D.patterns.find(x=>x.name===np.name);
     if(p){p.w=np.w;p.h=np.h;p.items=np.items;p.zones=np.zones;for(const r of D.rooms){if(r.pat!==p.id)continue;pushHist(r,'部屋の形の更新前');r.items=initItemsFor(p,r.mirror,r.bedNote);}upgraded=true;}
@@ -3036,6 +3070,7 @@ $('#fileIn').onchange=()=>{
   if(!D.rooms.length&&narrow())document.body.classList.add('openL');
   let seen=null;try{seen=localStorage.getItem(KEY+'-help');}catch(e){}
   if(!seen)openTour(0);
+  if(upgraded7)setTimeout(()=>toast('特別室（308・416）を新しい構造にしました'),1100);
   if(upgraded6)setTimeout(()=>toast('床頭台・TVを、壁の角から伸びるアーム式テレビに置きかえました'),1000);
   if(upgraded5)setTimeout(()=>toast('シャワートイレ付きの個室（12室）を、手書きの図をもとに作り直しました'),900);
   if(upgraded4&&!upgraded3&&!upgraded2)setTimeout(()=>toast('420・422号室を「2人部屋（洗面左側）」にしました'),700);
